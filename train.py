@@ -80,6 +80,7 @@ class GANTrainer:
         self.k = self.epsilon  # If k = 0, like in the paper, Keras returns nan values
         self.firstEpoch = 1
     
+    
     def combo_Loss(y_true, y_pred):
         return 0.7 * k.mean(k.square(y_pred - y_true), axis=-1) + 0.3 * k.mean(k.abs(y_true - y_pred))
     
@@ -106,7 +107,7 @@ class GANTrainer:
         loss_1 = 0.0
         loss_2 = 0.0
         loss_3 = 0.0
-        # Use value 2 instead of 12 for setting stride to 3, 3. -> leads to slower convergence but marginally better results.
+        # Use value 22 instead of 12 for setting stride to 3, 3. -> leads to slower convergence but marginally better results.
         for i in range(12):
             for j in range(12):
                 loss_1 = loss_1 + 0.02989 * mse(patches_true_1[0,i,j,], patches_pred_1[0,i,j])

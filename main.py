@@ -82,7 +82,7 @@ def patchwise_mse(y_true, y_pred):
     loss_1 = 0.0
     loss_2 = 0.0
     loss_3 = 0.0
-    # Use value 2 instead of 12 for setting stride to 3, 3. -> leads to slower convergence but marginally better results.
+    # Use value 22 instead of 12 for setting stride to 3, 3. -> leads to slower convergence but marginally better results.
     for i in range(12):
         for j in range(12):
             loss_1 = loss_1 + 0.02989 * mse(patches_true_1[0,i,j,], patches_pred_1[0,i,j])
