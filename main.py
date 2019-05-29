@@ -69,9 +69,9 @@ def patchwise_mse(y_true, y_pred):
     y_pred_cl = k.permute_dimensions(y_pred, (0, 2, 3, 1))
     ch1_t, ch2_t, ch3_t = tf.split(y_true_cl, [1, 1, 1], axis=3)
     ch1_p, ch2_p, ch3_p = tf.split(y_pred_cl, [1, 1, 1], axis=3)
-    chkp = keras.losses.mse(y_true, y_pred)
+    chkp = 0.99 * keras.losses.mse(y_true, y_pred)
     kernel = [1, 11, 11, 1]
-    strides = [1, 3, 3, 1]
+    strides = [1, 5, 5, 1]
     padding = 0
     patches_true_1 = tf.extract_image_patches(ch1_t, kernel, strides, [1, 1, 1, 1], padding='SAME')
     patches_true_2 = tf.extract_image_patches(ch2_t, kernel, strides, [1, 1, 1, 1], padding='SAME')
@@ -82,12 +82,13 @@ def patchwise_mse(y_true, y_pred):
     loss_1 = 0.0
     loss_2 = 0.0
     loss_3 = 0.0
-    #The value 22 calculated from image size 64, stride 3,3 , patch size 11x11.
-    for i in range(22):
-        loss_1 = loss_1 + 0.02989 * mse(patches_true_1[0,0,i,], patches_pred_1[0,0,i])
-        loss_2 = loss_2 + 0.05870 * mse(patches_true_2[0,0,i,], patches_pred_2[0,0,i])
-        loss_3 = loss_3 + 0.01141 * mse(patches_true_3[0,0,i,], patches_pred_3[0,0,i])
-    total_loss = chkp + 0.01 * (loss_1 + loss_2 + loss_3)
+    # Use value 2 instead of 12 for setting stride to 3, 3. -> leads to slower convergence but marginally better results.
+    for i in range(12):
+        for j in range(12):
+            loss_1 = loss_1 + 0.02989 * mse(patches_true_1[0,i,j,], patches_pred_1[0,i,j])
+            loss_2 = loss_2 + 0.05870 * mse(patches_true_2[0,i,j,], patches_pred_2[0,i,j])
+            loss_3 = loss_3 + 0.01141 * mse(patches_true_3[0,i,j,], patches_pred_3[0,i,j])
+    total_loss = chkp + (loss_1 + loss_2 + loss_3)
     return total_loss
 
 # Build models
@@ -102,6 +103,7 @@ gan = models.generator_containing_discriminator(generator, discriminator)
 print (gan.summary())
 
 generator.compile(loss=[patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse], optimizer=adam)
+# generator.compile(loss=['mse', 'mse', 'mse', 'mse', 'mse', 'mse', 'mse', 'mse', 'mse'], optimizer=adam)
 discriminator.compile(loss=['binary_crossentropy',
                   'categorical_crossentropy', 'binary_crossentropy',
                   'categorical_crossentropy', 'binary_crossentropy',
