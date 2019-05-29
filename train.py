@@ -6,6 +6,7 @@ import keras
 from keras.preprocessing import image
 import numpy as np
 from keras.utils import generic_utils
+from keras.losses import mean_squared_error as loss_pmse
 from keras import backend as k
 import numpy.linalg as LA
 from PIL import Image
@@ -94,7 +95,7 @@ class GANTrainer:
         y_pred_cl = k.permute_dimensions(y_pred, (0, 2, 3, 1))
         ch1_t, ch2_t, ch3_t = tf.split(y_true_cl, [1, 1, 1], axis=3)
         ch1_p, ch2_p, ch3_p = tf.split(y_pred_cl, [1, 1, 1], axis=3)
-        chkp = 0.99 * keras.losses.mse(y_true, y_pred)
+        chkp = 0.99 * loss_pmse(y_true, y_pred)
         kernel = [1, 11, 11, 1]
         strides = [1, 5, 5, 1]
         padding = 0

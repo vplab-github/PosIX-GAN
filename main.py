@@ -1,6 +1,7 @@
 from keras import backend as k
 from scipy import misc
 from keras.preprocessing import image
+from keras.losses import mean_squared_error as loss_pmse
 from keras.datasets import cifar10
 from keras.optimizers import Adam
 import tensorflow as tf
@@ -69,7 +70,7 @@ def patchwise_mse(y_true, y_pred):
     y_pred_cl = k.permute_dimensions(y_pred, (0, 2, 3, 1))
     ch1_t, ch2_t, ch3_t = tf.split(y_true_cl, [1, 1, 1], axis=3)
     ch1_p, ch2_p, ch3_p = tf.split(y_pred_cl, [1, 1, 1], axis=3)
-    chkp = 0.99 * keras.losses.mse(y_true, y_pred)
+    chkp = 0.99 * loss_pmse(y_true, y_pred)
     kernel = [1, 11, 11, 1]
     strides = [1, 5, 5, 1]
     padding = 0
