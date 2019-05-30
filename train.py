@@ -12,6 +12,8 @@ import numpy.linalg as LA
 from PIL import Image
 import tensorflow as tf
 import math
+import os
+
 class GANTrainer:
     def __init__(self, gen, disc, gan, data, batch_size, kLambda=.001, logEpochOutput=True, saveModelFrequency=200,
                  sampleSwatch=True, saveSampleSwatch=False):
@@ -55,6 +57,25 @@ class GANTrainer:
         self.y8 = np.load('190_lbls.npy')
         self.x9 = np.load('200_imgs.npy') / 255.
         self.y9 = np.load('200_lbls.npy')
+        # # Separated data for evaluation of PMSE/Combo loss
+        # self.x1 = np.load('-90_imgs.npy') / 255.
+        # self.y1 = np.load('-90_lbls.npy')
+        # self.x2 = np.load('-60_imgs.npy') / 255.
+        # self.y2 = np.load('-60_lbls.npy')
+        # self.x3 = np.load('-30_imgs.npy') / 255.
+        # self.y3 = np.load('-30_lbls.npy')
+        # self.x9 = np.load('-15_imgs.npy') / 255.
+        # self.y9 = np.load('-15_lbls.npy')
+        # self.x4 = np.load('+00_imgs.npy') / 255.
+        # self.y4 = np.load('+00_lbls.npy')
+        # self.x5 = np.load('+15_imgs.npy') / 255.
+        # self.y5 = np.load('+15_lbls.npy')
+        # self.x6 = np.load('+30_imgs.npy') / 255.
+        # self.y6 = np.load('+30_lbls.npy')
+        # self.x7 = np.load('+60_imgs.npy') / 255.
+        # self.y7 = np.load('+60_lbls.npy')
+        # self.x8 = np.load('+90_imgs.npy') / 255.
+        # self.y8 = np.load('+90_lbls.npy')
         # Real-time data augmentation
         self.b1 = self.datagentr.flow(self.x1, self.y1, batch_size=batch_size)
         self.b2 = self.datagentr.flow(self.x2, self.y2, batch_size=batch_size)
@@ -95,7 +116,7 @@ class GANTrainer:
         y_pred_cl = k.permute_dimensions(y_pred, (0, 2, 3, 1))
         ch1_t, ch2_t, ch3_t = tf.split(y_true_cl, [1, 1, 1], axis=3)
         ch1_p, ch2_p, ch3_p = tf.split(y_pred_cl, [1, 1, 1], axis=3)
-        chkp = 0.99 * loss_pmse(y_true, y_pred)
+        chkp = loss_pmse(y_true, y_pred)
         kernel = [1, 11, 11, 1]
         strides = [1, 5, 5, 1]
         padding = 0
@@ -114,7 +135,7 @@ class GANTrainer:
                 loss_1 = loss_1 + 0.02989 * mse(patches_true_1[0,i,j,], patches_pred_1[0,i,j])
                 loss_2 = loss_2 + 0.05870 * mse(patches_true_2[0,i,j,], patches_pred_2[0,i,j])
                 loss_3 = loss_3 + 0.01141 * mse(patches_true_3[0,i,j,], patches_pred_3[0,i,j])
-        total_loss = chkp + (loss_1 + loss_2 + loss_3)
+        total_loss = chkp + ((loss_1 + loss_2 + loss_3)/(12*12))
         return total_loss
 
     def train(self, nb_epoch, nb_batch_per_epoch, batch_size, gamma, path=""):
@@ -195,6 +216,7 @@ class GANTrainer:
                     y8b.append(np.where(y_8l == el)[0][0])
                     y9b.append(np.where(y_9l == el)[0][0])
 
+
                 x_gen_b1 = np.array(self.x1)[y1b]
                 x_gen_b2 = np.array(self.x2)[y2b]
                 x_gen_b3 = np.array(self.x3)[y3b]
@@ -214,8 +236,13 @@ class GANTrainer:
                 x_batch7, y_batch7 = self.b7.next()
                 x_batch8, y_batch8 = self.b8.next()
                 x_batch9, y_batch9 = self.b9.next()
+                print("PRINTING LABELS")
+                b = [np.where(r == 1)[0][0] for r in y_batch1]
+                print(b)
+                b = [np.where(r == 1)[0][0] for r in y_batch2]
+                print(b)
                 # print(np.shape((self.discriminator.outputs)[1]))
-                print(np.shape(y_batch), ' ', np.shape(y_batch1))
+                # print(np.shape(y_batch), ' ', np.shape(y_batch1))
 
                 d_loss_real = self.discriminator.train_on_batch([x_batch1, x_batch2, x_batch3, x_batch4, x_batch5, x_batch6,
                                                                  x_batch7, x_batch8, x_batch9],

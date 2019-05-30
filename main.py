@@ -14,17 +14,15 @@ import os
 from keras.utils import plot_model
 
 # Base Code (BEGAN) link - https://github.com/pbontrager/BEGAN-keras
-
 # As random initialization has been used for all models, and owing to size of the model itself, 
 # stop and run code again if you do not see promising results in 250 epochs. 
 # Generally, results are achieved in 50000 epochs.
 
 # Training parameters
 epochs = 1000000
-batches_per_epoch = 3
-batch_size = 15
+batches_per_epoch = 3 # Change as much as required
+batch_size = 15 # Do not change
 gamma = .5  # between 0 and 1
-
 # make images in form of (channels, col, row) as base code supoorted Theano backend
 def create_inputs_headpose():
     tr_x, tr_y, ts_x, ts_y = load_headpose()
@@ -70,7 +68,7 @@ def patchwise_mse(y_true, y_pred):
     y_pred_cl = k.permute_dimensions(y_pred, (0, 2, 3, 1))
     ch1_t, ch2_t, ch3_t = tf.split(y_true_cl, [1, 1, 1], axis=3)
     ch1_p, ch2_p, ch3_p = tf.split(y_pred_cl, [1, 1, 1], axis=3)
-    chkp = 0.99 * loss_pmse(y_true, y_pred)
+    chkp = loss_pmse(y_true, y_pred)
     kernel = [1, 11, 11, 1]
     strides = [1, 5, 5, 1]
     padding = 0
@@ -89,7 +87,7 @@ def patchwise_mse(y_true, y_pred):
             loss_1 = loss_1 + 0.02989 * mse(patches_true_1[0,i,j,], patches_pred_1[0,i,j])
             loss_2 = loss_2 + 0.05870 * mse(patches_true_2[0,i,j,], patches_pred_2[0,i,j])
             loss_3 = loss_3 + 0.01141 * mse(patches_true_3[0,i,j,], patches_pred_3[0,i,j])
-    total_loss = chkp + (loss_1 + loss_2 + loss_3)
+    total_loss = chkp + ((loss_1 + loss_2 + loss_3)/(12*12))
     return total_loss
 
 # Build models
@@ -104,7 +102,6 @@ gan = models.generator_containing_discriminator(generator, discriminator)
 print (gan.summary())
 
 generator.compile(loss=[patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse, patchwise_mse], optimizer=adam)
-# generator.compile(loss=['mse', 'mse', 'mse', 'mse', 'mse', 'mse', 'mse', 'mse', 'mse'], optimizer=adam)
 discriminator.compile(loss=['binary_crossentropy',
                   'categorical_crossentropy', 'binary_crossentropy',
                   'categorical_crossentropy', 'binary_crossentropy',
